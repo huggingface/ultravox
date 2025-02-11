@@ -4,6 +4,7 @@ import dataclasses
 import json
 import os
 import time
+from tqdm import tqdm
 from typing import IO, List, Optional
 
 import numpy as np
@@ -92,13 +93,14 @@ def run_tui(
     scores: Optional[List[float]] = None,
     eval_samples: Optional[List[eval_types.Sample]] = None,
 ):
-    if index >= 0:
+    if index >= 0 and args.verbose:
         print(f"--- Sample {index} ---")
     messages = sample.messages
     question_message = messages[-2] if len(messages) > 1 else messages[-1]
     transcript = f' ["{sample.audio_transcript}"]' if sample.audio_transcript else ""
-    print(f"Q: {question_message['content']}{transcript}")
-    print(f"A: ", end="")
+    if args.verbose:
+        print(f"Q: {question_message['content']}{transcript}")
+        print(f"A: ", end="")
     start_time = time.time()
     first_token_time = None
     text = ""
@@ -115,7 +117,8 @@ def run_tui(
             if first_token_time is None:
                 first_token_time = time.time()
             text += msg.text
-            print(msg.text, end="", flush=True)
+            if args.verbose:
+                print(msg.text, end="", flush=True)
         elif isinstance(msg, base.InferenceStats):
             stats = msg
     if first_token_time is None or stats is None:
@@ -163,7 +166,8 @@ def run_tui(
                 )
             else:
                 eval_str = " [eval failed]"
-        print(f"X: {expected_response}{eval_str}")
+        if args.verbose:
+            print(f"X: {expected_response}{eval_str}")
 
 
 def oneshot_infer(inference: base.VoiceInference, args: InferArgs):
@@ -218,12 +222,15 @@ def dataset_infer(inference: base.VoiceInference, args: InferArgs):
     else:
         scores: List[float] = []
         eval_samples: List[eval_types.Sample] = []
-        for i, sample in enumerate(datasets.Range(ds, args.num_samples)):
+        pbar = tqdm(enumerate(datasets.Range(ds, args.num_samples)), total=args.num_samples)
+        for i, sample in pbar:
             # Store the answer for JSON output.
             expected_answer = sample.messages[-1]["content"]
             # Drop any assistant response from the sample.
             sample.messages = sample.messages[:-1]
             run_tui(i, inference, sample, args, expected_answer, scores, eval_samples)
+            if len(scores) > 0:
+                pbar.set_postfix({'avg_score': np.mean(scores)})
         table = [
             [sample.question, sample.expected_answer, sample.generated_answer, score]
             for sample, score in zip(eval_samples, scores)
