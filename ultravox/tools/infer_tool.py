@@ -240,22 +240,21 @@ def dataset_infer(inference: base.VoiceInference, args: InferArgs):
 
 
 def main(args: InferArgs):
+    os.makedirs(os.path.join(os.getcwd(), "evals"), exist_ok=True)
 
-    if not os.path.exists(os.path.join(os.getcwd(), "evals")):
-        os.makedirs(os.path.join(os.getcwd(), "evals"))
-
-    wandb.init(
-        project="smolvox",
-        name=args.model,
-        config={
-            **dataclasses.asdict(args),
-            "rating_model": RATING_MODEL,
-            "instruct_system_prompt": INSTRUCT_SYSTEM_PROMPT,
-            "instruct_user_prompt": INSTRUCT_USER_PROMPT,
-        },
-        dir=os.path.join(os.getcwd(), "evals"),
-        save_code=True,
-    )
+    if not args.json:
+        wandb.init(
+            project="smolvox",
+            name=args.model,
+            config={
+                **dataclasses.asdict(args),
+                "rating_model": RATING_MODEL,
+                "instruct_system_prompt": INSTRUCT_SYSTEM_PROMPT,
+                "instruct_user_prompt": INSTRUCT_USER_PROMPT,
+            },
+            dir=os.path.join(os.getcwd(), "evals"),
+            save_code=True,
+        )
 
     if args.url is not None:
         api_key = os.environ.get("ULTRAVOX_API_KEY")
