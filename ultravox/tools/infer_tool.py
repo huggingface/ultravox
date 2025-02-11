@@ -9,12 +9,15 @@ from typing import IO, List, Optional
 import numpy as np
 import simple_parsing
 from torch.utils import data as data_utils
+import wandb
 
 from ultravox import data as datasets
 from ultravox.evaluation import eval
 from ultravox.evaluation import eval_types
 from ultravox.inference import base
 from ultravox.tools import infer_api
+from ultravox.evaluation.gpt_eval_instruct import INSTRUCT_SYSTEM_PROMPT, INSTRUCT_USER_PROMPT
+from ultravox.evaluation.gpt_eval import RATING_MODEL
 
 # There are two default modes for this tool, agent mode and ASR mode.
 # In agent mode, the answer is a response to the input content and cannot be
@@ -87,6 +90,7 @@ def run_tui(
     args: InferArgs,
     expected_response: Optional[str] = None,
     scores: Optional[List[float]] = None,
+    eval_samples: Optional[List[eval_types.Sample]] = None,
 ):
     if index >= 0:
         print(f"--- Sample {index} ---")
@@ -146,6 +150,7 @@ def run_tui(
             result = eval.evaluate_answer(eval_sample, eval_metric)
             if result.score is not None:
                 scores.append(result.score)
+                eval_samples.append(eval_sample)
                 eval_name = "score"
                 reason_str = ""
                 mean = np.mean(scores)
@@ -212,15 +217,39 @@ def dataset_infer(inference: base.VoiceInference, args: InferArgs):
                 print(json.dumps(output))
     else:
         scores: List[float] = []
+        eval_samples: List[eval_types.Sample] = []
         for i, sample in enumerate(datasets.Range(ds, args.num_samples)):
             # Store the answer for JSON output.
             expected_answer = sample.messages[-1]["content"]
             # Drop any assistant response from the sample.
             sample.messages = sample.messages[:-1]
-            run_tui(i, inference, sample, args, expected_answer, scores)
+            run_tui(i, inference, sample, args, expected_answer, scores, eval_samples)
+        table = [
+            [sample.question, sample.expected_answer, sample.generated_answer, score]
+            for sample, score in zip(eval_samples, scores)
+        ]
+        wandb.log({"eval_samples": wandb.Table(data=table, columns=["question", "expected_answer", "generated_answer", "score"])})
+        wandb.log({"average_score": np.mean(scores)})
 
 
 def main(args: InferArgs):
+
+    if not os.path.exists(os.path.join(os.getcwd(), "evals")):
+        os.makedirs(os.path.join(os.getcwd(), "evals"))
+
+    wandb.init(
+        project="smolvox",
+        name=args.model,
+        config={
+            **dataclasses.asdict(args),
+            "rating_model": RATING_MODEL,
+            "instruct_system_prompt": INSTRUCT_SYSTEM_PROMPT,
+            "instruct_user_prompt": INSTRUCT_USER_PROMPT,
+        },
+        dir=os.path.join(os.getcwd(), "evals"),
+        save_code=True,
+    )
+
     if args.url is not None:
         api_key = os.environ.get("ULTRAVOX_API_KEY")
         inference = infer_api.create_inference(args.url, args.model, api_key)
