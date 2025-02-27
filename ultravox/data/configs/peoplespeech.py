@@ -2,7 +2,7 @@ from ultravox.data import types
 
 PS_BASE_CONFIG = types.DatasetConfig(
     name="peoplespeech",
-    path="fixie-ai/peoples_speech",
+    path="/fsx/vb/smolvox-datasets/peoples_speech",
     subset="clean",
     splits=[
         types.DatasetSplitConfig(name="train", num_samples=1_501_271),

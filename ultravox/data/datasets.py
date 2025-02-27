@@ -114,7 +114,7 @@ class VoiceDataset(SizedIterableDataset):
             split=split,
             trust_remote_code=True,
             streaming=streaming,
-            download_config=hf_datasets.DownloadConfig(max_retries=10),
+            download_config=hf_datasets.DownloadConfig(max_retries=10) if streaming else None,
         )
         if audio_field is not None:
             dataset = dataset.cast_column(
@@ -253,6 +253,7 @@ class GenericDataset(VoiceDataset):
                         config.subset,
                         split=split.name,
                         audio_field=config.audio_field,
+                        streaming=config.streaming,
                     )
                 else:
                     ds = self._load_mds_dataset(

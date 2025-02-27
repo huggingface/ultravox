@@ -144,6 +144,8 @@ class DatasetConfig(helpers.Serializable):
     """Batch size for the dataset when using MDS."""
     eval_config: Optional[EvalConfig] = None
     """Eval config for the dataset."""
+    streaming: Optional[bool] = None
+    """Set to True to load the dataset in streaming mode."""
 
     def __post_init__(self):
         """Set defaults only if this is a root config, so that said defaults in a subclass don't act as overrides."""

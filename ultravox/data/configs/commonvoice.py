@@ -6,7 +6,7 @@ from ultravox.data import types
 # In the future, we will create new training splits from the "validated" split.
 CV_BASE_CONFIG = types.DatasetConfig(
     name="commonvoice",
-    path="fixie-ai/common_voice_17_0",
+    path="/fsx/vb/smolvox-datasets/common_voice_17_0",
     transcript_template="{{sentence}}",
     assistant_template="{{sentence}}",
 )
