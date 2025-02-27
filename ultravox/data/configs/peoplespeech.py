@@ -3,6 +3,8 @@ from ultravox.data import types
 PS_BASE_CONFIG = types.DatasetConfig(
     name="peoplespeech",
     path="/fsx/vb/smolvox-datasets/peoples_speech",
+    cache_dir="/fsx/vb/.cache/huggingface/datasets",
+    num_proc=96,
     subset="clean",
     splits=[
         types.DatasetSplitConfig(name="train", num_samples=1_501_271),

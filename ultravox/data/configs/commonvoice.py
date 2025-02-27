@@ -7,6 +7,8 @@ from ultravox.data import types
 CV_BASE_CONFIG = types.DatasetConfig(
     name="commonvoice",
     path="/fsx/vb/smolvox-datasets/common_voice_17_0",
+    cache_dir="/fsx/vb/.cache/huggingface/datasets",
+    num_proc=96,
     transcript_template="{{sentence}}",
     assistant_template="{{sentence}}",
 )
