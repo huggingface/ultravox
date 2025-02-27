@@ -106,6 +106,8 @@ class VoiceDataset(SizedIterableDataset):
         split: Optional[str] = None,
         streaming: bool = True,
         audio_field: Optional[str] = None,
+        num_proc: Optional[int] = None,
+        cache_dir: Optional[str] = None,
     ) -> data.Dataset:
         # HF datasets sometimes fails to download due to network issues, so retry a few times.
         dataset = hf_datasets.load_dataset(
@@ -114,7 +116,9 @@ class VoiceDataset(SizedIterableDataset):
             split=split,
             trust_remote_code=True,
             streaming=streaming,
-            download_config=hf_datasets.DownloadConfig(max_retries=10),
+            download_config=hf_datasets.DownloadConfig(max_retries=10) if streaming else None,
+            num_proc=num_proc,
+            cache_dir=cache_dir,
         )
         if audio_field is not None:
             dataset = dataset.cast_column(
@@ -253,6 +257,9 @@ class GenericDataset(VoiceDataset):
                         config.subset,
                         split=split.name,
                         audio_field=config.audio_field,
+                        streaming=config.streaming,
+                        num_proc=config.num_proc,
+                        cache_dir=config.cache_dir,
                     )
                 else:
                     ds = self._load_mds_dataset(

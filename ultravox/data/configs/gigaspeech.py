@@ -2,7 +2,9 @@ from ultravox.data import types
 
 GS_XL_CONFIG = types.DatasetConfig(
     name="gigaspeech-xl",
-    path="fixie-ai/gigaspeech",
+    path="/fsx/vb/smolvox-datasets/gigaspeech",
+    cache_dir="/fsx/vb/.cache/huggingface/datasets",
+    num_proc=96,
     subset="xl-empty-audio-removed",
     splits=[
         types.DatasetSplitConfig(name="train", num_samples=8_266_422),

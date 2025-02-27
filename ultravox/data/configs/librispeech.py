@@ -2,7 +2,9 @@ from ultravox.data import types
 
 LS_BASE_CONFIG = types.DatasetConfig(
     name="librispeech",
-    path="fixie-ai/librispeech_asr",
+    path="/fsx/vb/smolvox-datasets/librispeech_asr",
+    cache_dir="/fsx/vb/.cache/huggingface/datasets",
+    num_proc=96,
     transcript_template="{{text_proc.format_asr_text(text)}}",
     assistant_template="{{text_proc.format_asr_text(text)}}",
 )
